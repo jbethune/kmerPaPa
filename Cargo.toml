@@ -1,6 +1,6 @@
 [package]
 name = "kmer-papa"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jörn Bethune <joern@localhost>"]
 repository = "https://github.com/jbethune/kmerPaPa/"
 edition = "2018"
