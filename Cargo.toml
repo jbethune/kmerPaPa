@@ -1,0 +1,24 @@
+[package]
+name = "kmer-papa"
+version = "0.1.0"
+authors = ["Jörn Bethune <joern@localhost>"]
+repository = "https://github.com/jbethune/kmerPaPa/"
+edition = "2018"
+readme = "README.md"
+license = "MIT"
+keywords = [ "mutation", "genetics", "statistical model" ]
+description = "Determine genes with significantly more mutations than expected by chance"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "2.33.1"
+mutexpect = "0.1"
+twobit = "0.1"
+pattern_partition_prediction = "0.1"
+tabfile = "0.2"
+rand = "0.7"
+anyhow = "1.0"
+flate2 = "1.0"
+csv = "1.1"
+serde = { version = "1.0", features = ["derive"] }

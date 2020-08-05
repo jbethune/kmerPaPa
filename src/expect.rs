@@ -1,0 +1,138 @@
+use std::collections::hash_map::HashMap;
+
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+
+use mutexpect::MutationEvent;
+
+use crate::counts::ExpectedMutationCounts;
+use crate::io::{get_reader, get_writer};
+use crate::Float;
+
+pub fn expected_number_of_mutations(
+    possible_mutations: &HashMap<String, Vec<MutationEvent>>,
+    filter_for_id: Option<&str>,
+) -> Result<HashMap<String, ExpectedMutationCounts>> {
+    let mut result = HashMap::new();
+    for (region, events) in possible_mutations {
+        if let Some(id) = filter_for_id {
+            if region != id {
+                continue;
+            }
+        }
+        let mut counts = ExpectedMutationCounts::default();
+        for event in events {
+            counts.add(event.mutation_type, event.probability as Float);
+        }
+        result.insert(region.clone(), counts);
+    }
+    Ok(result)
+}
+
+// serialization stuff //
+
+type Count = Float;
+#[derive(Debug, Serialize, Deserialize)]
+struct CSVRow {
+    region: String,
+    unknown: Count,
+    synonymous: Count,
+    missense: Count,
+    nonsense: Count,
+    start_codon: Count,
+    stop_loss: Count,
+    splice_site: Count,
+}
+
+pub fn write_to_file(
+    out_path: &str,
+    expected_mutations: &HashMap<String, ExpectedMutationCounts>,
+) -> Result<()> {
+    let writer = get_writer(out_path)
+        .with_context(|| format!("failed to open file {} for writing", out_path))?;
+    let mut csv_writer = csv::WriterBuilder::new()
+        .delimiter(b'\t')
+        .from_writer(writer);
+    for (region, c) in expected_mutations {
+        let row = CSVRow {
+            region: region.clone(),
+            unknown: c.unknown,
+            synonymous: c.synonymous,
+            missense: c.missense,
+            nonsense: c.nonsense,
+            start_codon: c.start_codon,
+            stop_loss: c.stop_loss,
+            splice_site: c.splice_site,
+        };
+        csv_writer.serialize(row)?;
+    }
+    Ok(())
+}
+
+pub fn read_from_file(in_path: &str) -> Result<HashMap<String, ExpectedMutationCounts>> {
+    let mut result = HashMap::new();
+    let reader = get_reader(in_path)
+        .with_context(|| format!("failed to open file {} for reading", in_path))?;
+    let mut csv_reader = csv::ReaderBuilder::new()
+        .delimiter(b'\t')
+        .from_reader(reader);
+    for row_result in csv_reader.deserialize() {
+        let row: CSVRow = row_result?;
+        let counts = ExpectedMutationCounts {
+            unknown: row.unknown,
+            synonymous: row.synonymous,
+            missense: row.missense,
+            nonsense: row.nonsense,
+            start_codon: row.start_codon,
+            stop_loss: row.stop_loss,
+            splice_site: row.splice_site,
+        };
+        result.insert(row.region, counts);
+    }
+    Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expected_mutations_io() {
+        let path = "/tmp/unit_test.expected_mutations";
+        let mut em: HashMap<String, ExpectedMutationCounts> = HashMap::new();
+        write_to_file(path, &em).unwrap();
+        let em2 = read_from_file(path).unwrap();
+        assert_eq!(em2.len(), 0);
+
+        let counts1 = ExpectedMutationCounts {
+            unknown: 1.2,
+            synonymous: 2.3,
+            missense: 3.4,
+            nonsense: 4.5,
+            start_codon: 5.6,
+            stop_loss: 6.7,
+            splice_site: 7.8,
+        };
+        em.insert("foo".to_string(), counts1);
+        write_to_file(path, &em).unwrap();
+        let em2 = read_from_file(path).unwrap();
+        assert_eq!(em2.len(), 1);
+        assert_eq!(em2["foo"], counts1);
+
+        let counts2 = ExpectedMutationCounts {
+            unknown: 2.2,
+            synonymous: 3.3,
+            missense: 4.4,
+            nonsense: 5.5,
+            start_codon: 6.6,
+            stop_loss: 7.7,
+            splice_site: 8.8,
+        };
+        em.insert("bar".to_string(), counts2);
+        write_to_file(path, &em).unwrap();
+        let em2 = read_from_file(path).unwrap();
+        assert_eq!(em2.len(), 2);
+        assert_eq!(em2["foo"], counts1);
+        assert_eq!(em2["bar"], counts2);
+    }
+}
