@@ -29,7 +29,7 @@ The pipeline is a single executable (`kmer-papa`) that combines the important st
 
 ## The pipeline
 
-![The pipeline flow diagram](https://raw.github.com/jbethune/repo/master/images/pipeline.png)
+![The pipeline flow diagram](https://raw.githubusercontent.com/jbethune/kmerPaPa/master/images/pipeline.png)
 
 * Input files are marked with a blue border.
 * Pipeline steps are marked with a black border and their names are marked with a green background
@@ -191,7 +191,7 @@ And note that the p-values does not take into account the expected number of mut
 |--significant-mutations |output|A table of observed, expected, sampled and a p-value for different mutation types.|
 
 
-(##Mutation-type-numeric-code-table)
+##Mutation-type-numeric-code-table
 
 The input and output files of the pipeline are almost all text files. In order
 to be more space-efficient, there is a numeric encoding for the different types
