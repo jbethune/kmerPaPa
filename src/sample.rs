@@ -4,6 +4,7 @@ use std::default::Default;
 
 use anyhow::{Context, Result};
 use rand::Rng;
+use rand::distributions::uniform::Uniform;
 use serde::{Deserialize, Serialize};
 
 use mutexpect::MutationEvent;
@@ -21,7 +22,8 @@ pub fn sample_mutations(
     drop_unknown_mutation_type: bool,
     filter_for_id: Option<&str>,
 ) -> Result<SampledMutations> {
-    let mut random = rand::thread_rng();
+    let random = rand::thread_rng();
+    let mut sampler = random.sample_iter(Uniform::new(0f32, 1f32));
 
     let mut result: SampledMutations = HashMap::new();
     for (region_name, mutation_events) in possible_mutations {
@@ -45,33 +47,16 @@ pub fn sample_mutations(
 
         let mut distributions = HashMap::new();
 
-        // for each mutation type
-        for (mutation_type, mutation_probabilities) in &mut mutations {
-            // sort mutation probabilities
-            mutation_probabilities.sort_unstable_by(|a, b| a.partial_cmp(b).expect("no NaNs")); // make binary search possible
-
+        for (mutation_type, mutation_probabilities) in & mutations {
             let mut counter = DefaultCounter::new();
-            // do the random samplings
-            for _ in 0..number_of_samplings {
-                let exclusive_threshold = random.gen_range(0.0, 1.0); // floating point coin
-
-                // because the values are sorted, we can simply determine the number of values that
-                // are above the threshold and treat them as the number of failures.
-                let failures = match mutation_probabilities.binary_search_by(|other| {
-                    other.partial_cmp(&exclusive_threshold).expect("No NaNs")
-                }) {
-                    Ok(index) => {
-                        let mut i = index; // if the same probability exists several times, we need to use the leftmost one
-                        #[allow(clippy::float_cmp)]
-                        while i > 1 && mutation_probabilities[i - 1] == exclusive_threshold {
-                            i -= 1;
-                        }
-                        i // leftmost index of value
+            for _ in 0 .. number_of_samplings {
+                let mut hits = 0;
+                for probability in mutation_probabilities {
+                    if *probability >= sampler.next().expect("iterator protocol") {
+                        hits += 1;
                     }
-                    Err(index) => index, // minimum index of those entries higher than `threshold`
-                };
-                let successes = mutation_probabilities.len() - failures;
-                counter.inc(successes);
+                }
+                counter.inc(hits);
             }
             distributions.insert(*mutation_type, counter);
         }
