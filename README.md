@@ -1,4 +1,4 @@
-# kmerPaPa - Identifying disease genes with de-novo point mutations
+# GeNovo - Identifying disease genes with de-novo point mutations
 
 Everyone's genome contains some de-novo mutations: Mutations that are not part
 of their parents' genomes. These de-novo mutations can cause diseases but it is
@@ -7,7 +7,7 @@ have nothing to do with the disease. Furthermore, some genes have a higher
 chance of mutating which means that a mutation in that gene is not that
 surprising, even when that gene is mutated in several people with the disease.
 
-The name kmerPaPa stands for k-mer based Pattern Partition.
+The name GeNovo is a wordplay of *gene* detection based on *de-novo* mutations.
 
 ## Installation
 
@@ -18,13 +18,13 @@ If you are on a UNIX-based system, you might also be able to install `cargo` or 
 Secondly, you need to run
 
 ```
-cargo install kmer-papa
+cargo install genovo
 ```
 
-This will install the program kmer-papa at a specific location which will be shown at the end of the installation process.
+This will install the program genovo at a specific location which will be shown at the end of the installation process.
 (You might need to make adjustments to your `PATH` variable afterwards to automatically find the program on the command line)
 
-The pipeline is a single executable (`kmer-papa`) that combines the important steps from an earlier pipeline that I had put together.
+The pipeline is a single executable (`genovo`) that combines the important steps from an earlier pipeline that I had put together.
 (A single executable is much easier for others to use than a bunch of scripts that are all loosely coupled.)
 
 ## The pipeline
@@ -47,7 +47,7 @@ If no `--action` parameter is specified, the entire pipeline is run and all file
 You can also specify `-` as an input/output file. Depending on the action, this will be interpreted as STDIN or as STDOUT.
 
 If you are concerned about space usage you can also specify a `.gz` file extension.
-`kmer-papa` will automatically decompress/compress the input/output.
+`genovo` will automatically decompress/compress the input/output.
 
 ### ID filtering / parallel processing
 
@@ -63,7 +63,7 @@ If no `--action` parameter is specified, all steps are run.
 
 #### transform
 
-This step takes a [gff3 file](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md#readme) and transforms it into a `regions` file (which is a file format that is specific to kmer-papa).
+This step takes a [gff3 file](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md#readme) and transforms it into a `regions` file (which is a file format that is specific to genovo).
 The gff3 file needs to have the following attributes:
 
 * ID: For identifying the name of each transcript
