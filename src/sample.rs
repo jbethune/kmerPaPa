@@ -3,8 +3,8 @@ use std::convert::TryInto;
 use std::default::Default;
 
 use anyhow::{Context, Result};
-use rand::Rng;
 use rand::distributions::uniform::Uniform;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 
 use mutexpect::MutationEvent;
@@ -47,9 +47,9 @@ pub fn sample_mutations(
 
         let mut distributions = HashMap::new();
 
-        for (mutation_type, mutation_probabilities) in & mutations {
+        for (mutation_type, mutation_probabilities) in &mutations {
             let mut counter = DefaultCounter::new();
-            for _ in 0 .. number_of_samplings {
+            for _ in 0..number_of_samplings {
                 let mut hits = 0;
                 for probability in mutation_probabilities {
                     if *probability >= sampler.next().expect("iterator protocol") {

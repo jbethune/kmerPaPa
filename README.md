@@ -58,8 +58,22 @@ Please note that `--id` only accepts a single ID. Multiple IDs are not supported
 
 ### Steps of the pipeline
 
-Each of these steps can be executed in isolation by specifying the `--action STEP` parameter.
+Each of the steps of the pipeline can be executed in isolation by specifying the `--action STEP` parameter.
 If no `--action` parameter is specified, all steps are run.
+For example, if you want to run the entire pipeline for a specific transcript, you can execute the following command:
+
+```
+genovo \
+	--id ENST00000641515.2 \
+	--gff3 gencode.v32.annotation.gff3.protein_coding.gz \
+	--observed-mutations observed_mutations.txt \
+	--genome hg38.2bit \
+	--mutation-probabilities examples/PaPa_rates.txt
+```
+(line breaks included for clarity)
+
+This will print the comparisons between observed, expected and sampled mutations to STDOUT.
+You can add the `--significant-mutations FILE` parameter to write the results to a file instead.
 
 #### transform
 
