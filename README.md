@@ -68,7 +68,7 @@ genovo \
 	--gff3 gencode.v32.annotation.gff3.protein_coding.gz \
 	--observed-mutations observed_mutations.txt \
 	--genome hg38.2bit \
-	--mutation-probabilities examples/PaPa_rates.txt
+	--mutation-probabilities PaPa_rates.txt
 ```
 (line breaks included for clarity)
 
