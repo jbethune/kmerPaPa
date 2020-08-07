@@ -51,10 +51,11 @@ If you are concerned about space usage you can also specify a `.gz` file extensi
 
 ### ID filtering / parallel processing
 
-Every command supports the `--id` option.
-If `--id ID` is passed, then only the transcripts with the id `ID` will be processed.
+If the parameter `--id ID` is passed, then only the transcripts with the id `ID` will be processed
+and all other transcripts will be ignored.
 This is useful for parallel execution. You can launch a separate job for each transcript.
 Please note that `--id` only accepts a single ID. Multiple IDs are not supported.
+You can always combine the `--id` option with any other option.
 
 ### Steps of the pipeline
 
