@@ -81,6 +81,9 @@ pub fn read_mutations_from_file<P: AsRef<Path>>(
         if fields.len() < 4 {
             return Err( ParseError::new(format!("Bad format in line {}. Expecting at least 4 tab-delimited fields: chr, pos, ref, alt", record.line_number()) ).into());
         }
+        if fields[2].len() != 1 || fields[3].len() != 1 {
+            continue // skip indels
+        }
         let chromosome = fields[0].to_string();
         let position = {
             let value = fields[1].parse::<i64>()?;
