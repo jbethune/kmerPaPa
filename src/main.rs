@@ -36,7 +36,7 @@ fn require_initialization<'a, T>(
 }
 
 fn main() -> Result<()> {
-    let app = App::new("dnEdn")
+    let app = App::new("genovo")
         .version("1.0")
         .author("Jörn Bethune")
         .about("Determine genes enriched with de-novo mutations")
