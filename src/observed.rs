@@ -19,6 +19,8 @@ pub fn classify_mutations(
 ) -> Result<Vec<AnnotatedPointMutation>> {
     let mut result = Vec::new();
 
+    let flank = 2; // number of flanking bases left and right needed to classify all coding point mutations
+
     for annotation in annotations {
         if let Some(id) = filter_for_id {
             if id != annotation.name {
@@ -26,25 +28,25 @@ pub fn classify_mutations(
             }
         }
 
+        let seq_of_region: Vec<char> = genome.sequence(&annotation.chr, annotation.range.start - flank, annotation.range.stop + flank)?.chars().collect();
+        assert_eq!(seq_of_region.len(), 2 * flank + annotation.range.len());
+
         let classifier = PointMutationClassifier::new(&annotation, 2);
         let mut relevant_mutations =
             filter_observed_mutations(&observed_mutations, &annotation.chr, annotation.range);
         for mutation in &mut relevant_mutations {
-            let seq: Vec<char> = genome
-                .sequence(
-                    &mutation.chromosome,
-                    mutation.position - 2,
-                    mutation.position + 3,
-                )?
-                .chars()
-                .collect();
-            assert_eq!(seq[2], mutation.from); // sanity-check right reference genome
+            let sequence_context: Vec<char> = {
+                assert!(annotation.range.start <= mutation.position);
+                let middle = mutation.position - annotation.range.start + flank;
+                seq_of_region[middle - flank .. middle + flank + 1].into()
+            };
+            assert_eq!(sequence_context[2], mutation.from); // sanity-check right reference genome
 
             let overlapping_intron = annotation.find_intron(mutation.position);
 
             let mut mutation_type = classifier.classify_by_position(
                 mutation.position,
-                &seq,
+                &sequence_context,
                 &overlapping_intron, // may be none
             );
 
@@ -52,7 +54,7 @@ pub fn classify_mutations(
                 if let Some(overlapping_cds) = annotation.find_cds(mutation.position) {
                     mutation_type = classifier.classify_coding_mutation(
                         mutation.position,
-                        &seq,
+                        &sequence_context,
                         mutation.to,
                         &overlapping_cds,
                     );
