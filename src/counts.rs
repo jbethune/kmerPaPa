@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::iter::{IntoIterator, Iterator};
 use std::ops::{Add, AddAssign};
 
 use crate::{Float, MutationType};
@@ -38,10 +39,61 @@ impl<Count: Copy + Add<Output = Count> + AddAssign> MutationTypeCounts<Count> {
             MutationType::SpliceSite => self.splice_site += value,
         }
     }
+
+    pub fn mutation_types() -> Vec<MutationType> {
+        vec![
+            MutationType::Unknown,
+            MutationType::Synonymous,
+            MutationType::Missense,
+            MutationType::Nonsense,
+            MutationType::StartCodon,
+            MutationType::StopLoss,
+            MutationType::SpliceSite,
+        ]
+    }
 }
 
 pub type ExpectedMutationCounts = MutationTypeCounts<Float>;
 pub type ObservedMutationCounts = MutationTypeCounts<usize>;
+
+impl<Count: Clone> IntoIterator for MutationTypeCounts<Count> {
+    type Item = Count;
+    type IntoIter = MutationTypeCountsIter<Count>;
+    fn into_iter(self) -> Self::IntoIter {
+        Self::IntoIter::new(self)
+    }
+}
+
+pub struct MutationTypeCountsIter<Count> {
+    counts: MutationTypeCounts<Count>,
+    index: usize,
+}
+
+impl<Count> MutationTypeCountsIter<Count> {
+    fn new(counts: MutationTypeCounts<Count>) -> Self {
+        Self { counts, index: 0 }
+    }
+}
+
+impl<Count: Clone> Iterator for MutationTypeCountsIter<Count> {
+    type Item = Count;
+
+    fn next(&mut self) -> Option<Count> {
+        let result = match self.index {
+            0 => &self.counts.unknown,
+            1 => &self.counts.synonymous,
+            2 => &self.counts.missense,
+            3 => &self.counts.nonsense,
+            4 => &self.counts.start_codon,
+            5 => &self.counts.stop_loss,
+            6 => &self.counts.splice_site,
+            _ => return None,
+        }
+        .clone();
+        self.index += 1;
+        Some(result)
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct DefaultCounter {
