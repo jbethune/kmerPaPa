@@ -55,7 +55,7 @@ pub fn compare_mutations(
     Ok(result)
 }
 
-fn tally_up_observed_mutations(
+pub fn tally_up_observed_mutations(
     mutations: &[AnnotatedPointMutation],
     filter_for_id: Option<&str>,
 ) -> HashMap<String, ObservedMutationCounts> {

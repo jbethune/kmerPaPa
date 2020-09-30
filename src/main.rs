@@ -109,6 +109,9 @@ fn main() -> Result<()> {
              .value_name("NAME")
              .help("Only process a gene/transcript with the given ID (useful for parallel processing)")
              .takes_value(true))
+        .arg(Arg::with_name("sum-up-observed-mutations-per-transcript")
+             .long("--sum-up-observed-mutations-per-transcript")
+             .help("Tally up the number of observed mutations instead of displaying them in detail (can be used in combination with --action classify and --classified-mutations <output-file>)"))
         .arg(Arg::with_name("number-of-random-samples")
              .long("--number-of-random-samples")
              .value_name("NUMBER")
@@ -267,7 +270,17 @@ fn main() -> Result<()> {
             )?;
 
             if let Some(classified_mutations_file) = matches.value_of("classified-mutations") {
-                observed::write_to_file(classified_mutations_file, &classified_mutations)?;
+                if matches.occurrences_of("sum-up-observed-mutations-per-transcript") > 0 {
+                    // sum up the number of mutations of each type for each transcript
+                    observed::sum_up_and_write_to_file(
+                        classified_mutations_file,
+                        &classified_mutations,
+                    )?;
+                } else {
+                    // Write the classification for each individual mutation on a separate line
+                    // This is what you want if you want to run the full pipeline
+                    observed::write_to_file(classified_mutations_file, &classified_mutations)?;
+                }
             }
             if !run_all {
                 // we are done here

@@ -1,3 +1,4 @@
+use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use anyhow::{Context, Result};
@@ -8,6 +9,8 @@ use mutexpect::{MutationType, PointMutationClassifier};
 use tabfile::Tabfile;
 use twobit::TwoBitFile;
 
+use crate::compare::tally_up_observed_mutations;
+use crate::counts::ObservedMutationCounts;
 use crate::error::ParseError;
 use crate::io::{get_reader, get_writer};
 
@@ -28,7 +31,14 @@ pub fn classify_mutations(
             }
         }
 
-        let seq_of_region: Vec<char> = genome.sequence(&annotation.chr, annotation.range.start - flank, annotation.range.stop + flank)?.chars().collect();
+        let seq_of_region: Vec<char> = genome
+            .sequence(
+                &annotation.chr,
+                annotation.range.start - flank,
+                annotation.range.stop + flank,
+            )?
+            .chars()
+            .collect();
         assert_eq!(seq_of_region.len(), 2 * flank + annotation.range.len());
 
         let classifier = PointMutationClassifier::new(&annotation, 2);
@@ -38,7 +48,7 @@ pub fn classify_mutations(
             let sequence_context: Vec<char> = {
                 assert!(annotation.range.start <= mutation.position);
                 let middle = mutation.position - annotation.range.start + flank;
-                seq_of_region[middle - flank .. middle + flank + 1].into()
+                seq_of_region[middle - flank..middle + flank + 1].into()
             };
             assert_eq!(sequence_context[2], mutation.from); // sanity-check right reference genome
 
@@ -84,7 +94,7 @@ pub fn read_mutations_from_file<P: AsRef<Path>>(
             return Err( ParseError::new(format!("Bad format in line {}. Expecting at least 4 tab-delimited fields: chr, pos, ref, alt", record.line_number()) ).into());
         }
         if fields[2].len() != 1 || fields[3].len() != 1 {
-            continue // skip indels
+            continue; // skip indels
         }
         let chromosome = fields[0].to_string();
         let position = {
@@ -155,7 +165,6 @@ fn filter_observed_mutations<'a>(
 
 // serialization stuff //
 
-//pub fn write_to_file(out_path: &str, observed_mutations: &HashMap<String, ObservedMutationCounts>) -> Result<()> {
 pub fn write_to_file(out_path: &str, annotated_mutations: &[AnnotatedPointMutation]) -> Result<()> {
     let writer = get_writer(out_path)
         .with_context(|| format!("failed to open file {} for writing", out_path))?;
@@ -164,6 +173,38 @@ pub fn write_to_file(out_path: &str, annotated_mutations: &[AnnotatedPointMutati
         .from_writer(writer);
     for mutation in annotated_mutations {
         csv_writer.serialize(mutation)?;
+    }
+    Ok(())
+}
+
+/// Write a file with the following format:
+/// ```
+/// transcript_id<tab>synonymous<tab>missense<tab>...
+/// ENSG1234<tab>synonymous_mutation_count<tab>missense_mutation_count<tab>...
+/// ```
+///
+pub fn sum_up_and_write_to_file(
+    out_path: &str,
+    annotated_mutations: &[AnnotatedPointMutation],
+) -> Result<()> {
+    let transcript_mutation_counts = tally_up_observed_mutations(annotated_mutations, None);
+
+    let writer = get_writer(out_path)
+        .with_context(|| format!("failed to open file {} for writing", out_path))?;
+    let mut buf_writer = BufWriter::new(writer);
+    buf_writer.write_all(b"name")?;
+    for mut_type in ObservedMutationCounts::mutation_types() {
+        buf_writer.write_fmt(format_args!("\t{}", mut_type))?;
+    }
+    buf_writer.write_all(b"\n")?; // end of header line
+
+    // for every transcript
+    for (name, counts) in transcript_mutation_counts {
+        buf_writer.write(name.as_bytes())?;
+        for count in counts {
+            buf_writer.write_fmt(format_args!("\t{}", count))?;
+        }
+        buf_writer.write_all(b"\n")?;
     }
     Ok(())
 }
