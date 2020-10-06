@@ -17,6 +17,7 @@ pub fn enumerate_possible_mutations(
     annotations: &[SeqAnnotation],
     ref_genome: &TwoBitFile,
     mutation_rates: &PaPaPred,
+    scaling_factor: f32,
     drop_nan: bool,
     filter_for_id: Option<&str>,
 ) -> Result<PossibleMutations> {
@@ -32,7 +33,12 @@ pub fn enumerate_possible_mutations(
         let stop = annotation.range.stop + radius + 1;
         let seq = ref_genome.sequence(&annotation.chr, start, stop)?;
         match possible_mutations(&seq, &annotation, &mutation_rates, drop_nan) {
-            Ok(mutations) => {
+            Ok(mut mutations) => {
+                if scaling_factor != 1.0 {
+                    for mutation in &mut mutations {
+                        mutation.probability *= scaling_factor;
+                    }
+                }
                 result.insert(annotation.name.clone(), mutations);
             }
             Err(e) => {

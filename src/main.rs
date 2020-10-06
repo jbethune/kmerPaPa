@@ -37,7 +37,7 @@ fn require_initialization<'a, T>(
 
 fn main() -> Result<()> {
     let app = App::new("genovo")
-        .version("0.1.4")
+        .version("0.1.5")
         .author("Jörn Bethune")
         .about("Determine genes enriched with de-novo mutations")
         .after_help("If no --action is given, all actions are executed.\n\
@@ -109,6 +109,12 @@ fn main() -> Result<()> {
              .value_name("NAME")
              .help("Only process a gene/transcript with the given ID (useful for parallel processing)")
              .takes_value(true))
+        .arg(Arg::with_name("scaling-factor")
+             .long("--scaling-factor")
+             .value_name("NAME")
+             .help("Scaling factor for all mutation probabilities")
+             .default_value("1.0")
+             .takes_value(true))
         .arg(Arg::with_name("sum-up-observed-mutations-per-transcript")
              .long("--sum-up-observed-mutations-per-transcript")
              .help("Tally up the number of observed mutations instead of displaying them in detail (can be used in combination with --action classify and --classified-mutations <output-file>)"))
@@ -123,6 +129,10 @@ fn main() -> Result<()> {
     let matches = app.get_matches();
     let run_all = matches.value_of("action").is_none();
     let id = matches.value_of("id");
+    let scaling_factor: f32 = matches
+        .value_of("scaling-factor")
+        .expect("default value")
+        .parse()?;
 
     /*
      * Depending on what --action is given, each step may or may not produce results.
@@ -189,6 +199,7 @@ fn main() -> Result<()> {
                 require_initialization(&regions, "--genomic-regions")?,
                 require_initialization(&ref_genome, "--genome")?,
                 require_initialization(&papa, "--mutation-probabilities")?,
+                scaling_factor,
                 true,
                 id,
             )?;
