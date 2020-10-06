@@ -91,7 +91,7 @@ pub fn read_mutations_from_file<P: AsRef<Path>>(
         let record = record_result?;
         let fields = record.fields();
         if fields.len() < 4 {
-            return Err( ParseError::new(format!("Bad format in line {}. Expecting at least 4 tab-delimited fields: chr, pos, ref, alt", record.line_number()) ).into());
+            return Err( ParseError::new(format!("Bad format in line {}. Expecting at least 4 instead of {} tab-delimited fields: chr, pos, ref, alt", record.line_number(), fields.len()) ).into());
         }
         if fields[2].len() != 1 || fields[3].len() != 1 {
             continue; // skip indels
