@@ -112,14 +112,17 @@ impl DefaultCounter {
         self.values[index] += 1
     }
 
-    /// Calculate the p-value for observed a given number of events (represented by the vector
-    /// index).
+    /// Calculate all possible p-values for observing a given number of events.
     ///
-    /// This is a one-sided test with the right tail being significant
+    /// This is a one-sided test with the right tail being significant.
+    ///
     pub fn p_values(&self) -> PValues {
         let mut result = Vec::new();
         let total: Float = self.values.iter().sum::<usize>() as Float;
         let mut accumulator: Float = 0.0;
+
+        /// self.values is a vector where index `i` represents
+        /// the number of times exactly `i` mutations have been observed.
 
         for count in self.values.iter().rev() {
             // I go from right to left, because it's easier to calculate
