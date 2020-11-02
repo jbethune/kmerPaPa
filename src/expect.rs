@@ -1,9 +1,13 @@
 use std::collections::hash_map::HashMap;
+use std::str::FromStr;
+use std::convert::TryInto;
 
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
-use mutexpect::MutationEvent;
+use bigdecimal::{BigDecimal, ToPrimitive};
+
+use mutexpect::{MutationEvent, MutationType};
 
 use crate::counts::ExpectedMutationCounts;
 use crate::io::{get_reader, get_writer};
@@ -20,11 +24,26 @@ pub fn expected_number_of_mutations(
                 continue;
             }
         }
+
         let mut counts = ExpectedMutationCounts::default();
+        let mut precise_counts: HashMap<MutationType, BigDecimal> = HashMap::new();
+        let zero = BigDecimal::from_str("0.0").expect("trivial");
         for event in events {
-            counts.add(event.mutation_type, event.probability as Float);
+            //counts.add(event.mutation_type, event.probability as Float); //TODO remove me
+
+            if !precise_counts.contains_key(&event.mutation_type) {
+                precise_counts.insert(event.mutation_type, zero.clone());
+            }
+            let value: BigDecimal = event.probability.try_into().unwrap_or(zero.clone());
+            *(precise_counts.get_mut(&event.mutation_type).unwrap()) += value;
+
+        }
+
+        for (mutation_type, probability) in precise_counts {
+            counts.add(mutation_type, probability.to_f32().unwrap());
         }
         result.insert(region.clone(), counts);
+
     }
     Ok(result)
 }
