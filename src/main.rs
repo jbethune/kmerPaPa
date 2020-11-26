@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{App, Arg};
 
-use pattern_partition_prediction::PaPaPred;
+use pattern_partition_prediction::{PaPaPred, PaPaPredIndel};
 use twobit::TwoBitFile;
 
 mod compare;
@@ -37,7 +37,7 @@ fn require_initialization<'a, T>(
 
 fn main() -> Result<()> {
     let app = App::new("genovo")
-        .version("0.1.5")
+        .version("0.1.6")
         .author("Jörn Bethune")
         .about("Determine genes enriched with de-novo mutations")
         .after_help("If no --action is given, all actions are executed.\n\
@@ -59,10 +59,15 @@ fn main() -> Result<()> {
              .value_name("FILE")
              .help("A 2bit reference genome sequence file")
              .takes_value(true))
-        .arg(Arg::with_name("mutation-probabilities")
-             .long("mutation-probabilities")
+        .arg(Arg::with_name("point-mutation-probabilities")
+             .long("point-mutation-probabilities")
              .value_name("FILE")
-             .help("A pattern partition prediction mutation probability table")
+             .help("A pattern partition prediction point mutation probability table")
+             .takes_value(true))
+        .arg(Arg::with_name("indel-mutation-probabilities")
+             .long("indel-mutation-probabilities")
+             .value_name("FILE")
+             .help("A pattern partition prediction indel mutation probability table")
              .takes_value(true))
         .arg(Arg::with_name("observed-mutations")
              .long("observed-mutations")
@@ -148,8 +153,16 @@ fn main() -> Result<()> {
     };
 
     let papa = {
-        if let Some(papa_file) = matches.value_of("mutation-probabilities") {
-            Some(PaPaPred::new(papa_file, Some(5))?) // 5 to have 2 flanking bases around a point mutation
+        if let Some(papa_file) = matches.value_of("point-mutation-probabilities") {
+            Some(PaPaPred::new(papa_file, Some(5))?) // 5 to have at least 2 flanking bases around a point mutation to always have a full codon available for every coding site
+        } else {
+            None
+        }
+    };
+
+    let papa_indel = {
+        if let Some(papa_file) = matches.value_of("indel-mutation-probabilities") {
+            Some(PaPaPredIndel::new(papa_file, None)?)
         } else {
             None
         }
@@ -198,7 +211,7 @@ fn main() -> Result<()> {
             let possible_mutations = enumerate_possible_mutations(
                 require_initialization(&regions, "--genomic-regions")?,
                 require_initialization(&ref_genome, "--genome")?,
-                require_initialization(&papa, "--mutation-probabilities")?,
+                require_initialization(&papa, "--point-mutation-probabilities")?,
                 scaling_factor,
                 true,
                 id,

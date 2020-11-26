@@ -32,7 +32,7 @@ pub fn enumerate_possible_mutations(
         let start = annotation.range.start - radius;
         let stop = annotation.range.stop + radius + 1;
         let seq = ref_genome.sequence(&annotation.chr, start, stop)?;
-        match possible_mutations(&seq, &annotation, &mutation_rates, drop_nan) {
+        match possible_mutations(&seq, &annotation, mutation_rates, drop_nan) {
             Ok(mut mutations) => {
                 if scaling_factor != 1.0 {
                     for mutation in &mut mutations {
