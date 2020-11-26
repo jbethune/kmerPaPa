@@ -119,9 +119,8 @@ impl DefaultCounter {
         let total: Float = self.values.iter().sum::<usize>() as Float;
         let mut accumulator: Float = 0.0;
 
-        /// self.values is a vector where index `i` represents
-        /// the number of times exactly `i` mutations have been observed.
-
+        // self.values is a vector where index `i` represents
+        // the number of times exactly `i` mutations have been observed.
         for count in self.values.iter().rev() {
             // I go from right to left, because it's easier to calculate
             accumulator += *count as Float;
