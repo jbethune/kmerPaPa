@@ -20,14 +20,10 @@ pub fn compare_mutations(
     let observed_mutations =
         tally_up_observed_mutations(classified_observed_mutations, filter_for_id);
 
-    for (region, region_observed) in observed_mutations {
-        let region_expected = expected_mutations.get(&region).with_context(|| {
-            format!(
-                "Failed to look up expected mutations for region {}",
-                &region
-            )
-        })?;
-        let region_sampled = sampled_mutations.get(&region).with_context(|| {
+    let no_observations = ObservedMutationCounts::default(); // no observed mutations
+    for (region, region_expected) in expected_mutations {
+        let region_observed = observed_mutations.get(region).unwrap_or(&no_observations);
+        let region_sampled = sampled_mutations.get(region).with_context(|| {
             format!("Failed to look up sampled mutations for region {}", &region)
         })?;
         for mutation_type in MutationType::iter() {
