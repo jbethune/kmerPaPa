@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::counts::{ExpectedMutationCounts, ObservedMutationCounts};
 use crate::io::get_writer;
-use crate::observed::AnnotatedPointMutation;
+use crate::observed::Mutation;
 use crate::sample::SampledMutations;
 use crate::{Float, MutationType};
 
 pub fn compare_mutations(
-    classified_observed_mutations: &[AnnotatedPointMutation],
+    classified_observed_mutations: &[Mutation],
     expected_mutations: &HashMap<String, ExpectedMutationCounts>,
     sampled_mutations: &SampledMutations,
     filter_for_id: Option<&str>,
@@ -56,20 +56,22 @@ pub fn compare_mutations(
 }
 
 pub fn tally_up_observed_mutations(
-    mutations: &[AnnotatedPointMutation],
+    mutations: &[Mutation],
     filter_for_id: Option<&str>,
 ) -> HashMap<String, ObservedMutationCounts> {
     let mut result = HashMap::new();
     for mutation in mutations {
-        if let Some(id) = filter_for_id {
-            if mutation.region_name != id {
-                continue;
+        if let Some(ref region) = mutation.region {
+            if let Some(id) = filter_for_id {
+                if region != id {
+                    continue
+                }
             }
-        }
-        result
-            .entry(mutation.region_name.clone())
-            .or_insert_with(ObservedMutationCounts::default)
-            .add(mutation.mutation_type, 1);
+            result
+                .entry(region.clone())
+                .or_insert_with(ObservedMutationCounts::default)
+                .add(mutation.mutation_type, 1);
+        } // else: No region name, no useful statistics
     }
     result
 }
