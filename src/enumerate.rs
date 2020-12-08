@@ -4,7 +4,7 @@ use std::io::{BufRead, BufReader, BufWriter, Write};
 use anyhow::{Context, Result};
 
 use mutexpect::{possible_mutations, MutationEvent, SeqAnnotation};
-use pattern_partition_prediction::PaPaPred;
+use pattern_partition_prediction::{PaPaPred, PaPaPredIndel};
 use twobit::TwoBitFile;
 
 use crate::error::ParseError;
@@ -17,6 +17,7 @@ pub fn enumerate_possible_mutations(
     annotations: &[SeqAnnotation],
     ref_genome: &TwoBitFile,
     mutation_rates: &PaPaPred,
+    indel_mutation_rates: &Option<PaPaPredIndel>,
     scaling_factor: f32,
     drop_nan: bool,
     filter_for_id: Option<&str>,
@@ -32,7 +33,7 @@ pub fn enumerate_possible_mutations(
         let start = annotation.range.start - radius;
         let stop = annotation.range.stop + radius + 1;
         let seq = ref_genome.sequence(&annotation.chr, start, stop)?;
-        match possible_mutations(&seq, &annotation, mutation_rates, drop_nan) {
+        match possible_mutations(&seq, &annotation, mutation_rates, indel_mutation_rates, drop_nan) {
             Ok(mut mutations) => {
                 if scaling_factor != 1.0 {
                     for mutation in &mut mutations {

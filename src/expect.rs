@@ -61,6 +61,9 @@ struct CSVRow {
     start_codon: Count,
     stop_loss: Count,
     splice_site: Count,
+    intronic: Count,
+    inframe_indel: Count,
+    frameshift_indel: Count,
 }
 
 pub fn write_to_file(
@@ -82,6 +85,9 @@ pub fn write_to_file(
             start_codon: c.start_codon,
             stop_loss: c.stop_loss,
             splice_site: c.splice_site,
+            intronic: c.intronic,
+            inframe_indel: c.inframe_indel,
+            frameshift_indel: c.frameshift_indel,
         };
         csv_writer.serialize(row)?;
     }
@@ -105,6 +111,9 @@ pub fn read_from_file(in_path: &str) -> Result<HashMap<String, ExpectedMutationC
             start_codon: row.start_codon,
             stop_loss: row.stop_loss,
             splice_site: row.splice_site,
+            intronic: row.intronic,
+            inframe_indel: row.inframe_indel,
+            frameshift_indel: row.frameshift_indel,
         };
         result.insert(row.region, counts);
     }
@@ -131,6 +140,9 @@ mod tests {
             start_codon: 5.6,
             stop_loss: 6.7,
             splice_site: 7.8,
+            intronic: 8.9,
+            inframe_indel: 9.1,
+            frameshift_indel: 10.11,
         };
         em.insert("foo".to_string(), counts1);
         write_to_file(path, &em).unwrap();
@@ -146,6 +158,9 @@ mod tests {
             start_codon: 6.6,
             stop_loss: 7.7,
             splice_site: 8.8,
+            intronic: 9.9,
+            inframe_indel: 10.10,
+            frameshift_indel: 11.11,
         };
         em.insert("bar".to_string(), counts2);
         write_to_file(path, &em).unwrap();

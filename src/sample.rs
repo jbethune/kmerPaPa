@@ -77,6 +77,9 @@ struct CSVRow {
     start_codon: String,
     stop_loss: String,
     splice_site: String,
+    intronic: String,
+    inframe_indel: String,
+    frameshift_indel: String,
 }
 
 pub fn write_to_file(out_path: &str, sampled_mutations: &SampledMutations) -> Result<()> {
@@ -98,6 +101,9 @@ pub fn write_to_file(out_path: &str, sampled_mutations: &SampledMutations) -> Re
                 MutationType::StartCodon => row.start_codon = value,
                 MutationType::StopLoss => row.stop_loss = value,
                 MutationType::SpliceSite => row.splice_site = value,
+                MutationType::Intronic => row.intronic = value,
+                MutationType::InFrameIndel => row.inframe_indel = value,
+                MutationType::FrameshiftIndel => row.frameshift_indel = value,
             }
         }
         csv_writer.serialize(row)?;
