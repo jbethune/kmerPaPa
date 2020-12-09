@@ -2,6 +2,8 @@ use std::convert::TryFrom;
 use std::iter::{IntoIterator, Iterator};
 use std::ops::{Add, AddAssign};
 
+use mutexpect::MutationTypeIter;
+
 use crate::{Float, MutationType};
 
 #[derive(Copy, Clone, Default, Debug, PartialEq)]
@@ -13,9 +15,12 @@ pub struct MutationTypeCounts<Count> {
     pub start_codon: Count,
     pub stop_loss: Count,
     pub splice_site: Count,
+    pub intronic: Count,
+    pub inframe_indel: Count,
+    pub frameshift_indel: Count,
 }
 
-impl<Count: Copy + Add<Output = Count> + AddAssign> MutationTypeCounts<Count> {
+impl<Count: Copy> MutationTypeCounts<Count> {
     pub fn get(&self, mutation_type: MutationType) -> Count {
         match mutation_type {
             MutationType::Unknown => self.unknown,
@@ -25,9 +30,18 @@ impl<Count: Copy + Add<Output = Count> + AddAssign> MutationTypeCounts<Count> {
             MutationType::StartCodon => self.start_codon,
             MutationType::StopLoss => self.stop_loss,
             MutationType::SpliceSite => self.splice_site,
+            MutationType::Intronic => self.intronic,
+            MutationType::InFrameIndel => self.inframe_indel,
+            MutationType::FrameshiftIndel => self.frameshift_indel,
         }
     }
 
+    pub fn mutation_types() -> Vec<MutationType> {
+        MutationType::iter().collect()
+    }
+}
+
+impl<Count: Add<Output = Count> + AddAssign> MutationTypeCounts<Count> {
     pub fn add(&mut self, mutation_type: MutationType, value: Count) {
         match mutation_type {
             MutationType::Unknown => self.unknown += value,
@@ -37,26 +51,18 @@ impl<Count: Copy + Add<Output = Count> + AddAssign> MutationTypeCounts<Count> {
             MutationType::StartCodon => self.start_codon += value,
             MutationType::StopLoss => self.stop_loss += value,
             MutationType::SpliceSite => self.splice_site += value,
+            MutationType::Intronic => self.intronic += value,
+            MutationType::InFrameIndel => self.inframe_indel += value,
+            MutationType::FrameshiftIndel => self.frameshift_indel += value,
         }
     }
-
-    pub fn mutation_types() -> Vec<MutationType> {
-        vec![
-            MutationType::Unknown,
-            MutationType::Synonymous,
-            MutationType::Missense,
-            MutationType::Nonsense,
-            MutationType::StartCodon,
-            MutationType::StopLoss,
-            MutationType::SpliceSite,
-        ]
-    }
 }
+
 
 pub type ExpectedMutationCounts = MutationTypeCounts<Float>;
 pub type ObservedMutationCounts = MutationTypeCounts<usize>;
 
-impl<Count: Clone> IntoIterator for MutationTypeCounts<Count> {
+impl<Count: AddAssign + Add<Output=Count> + Copy> IntoIterator for MutationTypeCounts<Count> {
     type Item = Count;
     type IntoIter = MutationTypeCountsIter<Count>;
     fn into_iter(self) -> Self::IntoIter {
@@ -66,32 +72,24 @@ impl<Count: Clone> IntoIterator for MutationTypeCounts<Count> {
 
 pub struct MutationTypeCountsIter<Count> {
     counts: MutationTypeCounts<Count>,
-    index: usize,
+    mutation_type_iter: MutationTypeIter,
 }
 
 impl<Count> MutationTypeCountsIter<Count> {
     fn new(counts: MutationTypeCounts<Count>) -> Self {
-        Self { counts, index: 0 }
+        Self { counts, mutation_type_iter: MutationType::iter() }
     }
 }
 
-impl<Count: Clone> Iterator for MutationTypeCountsIter<Count> {
+impl<Count: Copy + Add<Output=Count> + AddAssign> Iterator for MutationTypeCountsIter<Count> {
     type Item = Count;
 
     fn next(&mut self) -> Option<Count> {
-        let result = match self.index {
-            0 => &self.counts.unknown,
-            1 => &self.counts.synonymous,
-            2 => &self.counts.missense,
-            3 => &self.counts.nonsense,
-            4 => &self.counts.start_codon,
-            5 => &self.counts.stop_loss,
-            6 => &self.counts.splice_site,
-            _ => return None,
+        if let Some(mutation_type) = self.mutation_type_iter.next() {
+            Some(self.counts.get(mutation_type).clone())
+        } else {
+            None
         }
-        .clone();
-        self.index += 1;
-        Some(result)
     }
 }
 
@@ -121,9 +119,8 @@ impl DefaultCounter {
         let total: Float = self.values.iter().sum::<usize>() as Float;
         let mut accumulator: Float = 0.0;
 
-        /// self.values is a vector where index `i` represents
-        /// the number of times exactly `i` mutations have been observed.
-
+        // self.values is a vector where index `i` represents
+        // the number of times exactly `i` mutations have been observed.
         for count in self.values.iter().rev() {
             // I go from right to left, because it's easier to calculate
             accumulator += *count as Float;
