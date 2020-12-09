@@ -221,4 +221,7 @@ of mutations.
 | loss of stop codon            | 4            |
 | loss of start codon           | 5            |
 | loss of canonical splice site | 6            |
+| Mutation within an intron     | 7            |
+| Non-frameshift indel          | 8            |
+| Frameshift indel              | 9            |
 |                               |              |
