@@ -176,7 +176,6 @@ pub fn classify_mutations(
 
             let mut classified_mutation = mutation.clone();
             classified_mutation.region = Some(annotation.name.clone());
-
             match mutation.change {
                 Change::PointMutation(_, _) => {
                     let mut mutation_type = classifier.classify_by_position(

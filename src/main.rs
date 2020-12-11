@@ -162,7 +162,14 @@ fn main() -> Result<()> {
 
     let papa_indel = {
         if let Some(papa_file) = matches.value_of("indel-mutation-probabilities") {
-            Some(PaPaPredIndel::new(papa_file, None)?)
+            let min_width = {
+                if let Some(papa_point) = &papa {
+                    Some(papa_point.kmer_size().saturating_sub(1))
+                } else {
+                    None
+                }
+            };
+            Some(PaPaPredIndel::new(papa_file, min_width)?)
         } else {
             None
         }
