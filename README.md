@@ -69,7 +69,7 @@ genovo \
 	--gff3 gencode.v32.annotation.gff3.protein_coding.gz \
 	--observed-mutations observed_mutations.txt \
 	--genome hg38.2bit \
-	--mutation-probabilities PaPa_rates.txt
+	--point-mutation-probabilities PaPa_rates.txt
 ```
 (line breaks included for clarity)
 
@@ -130,12 +130,13 @@ The numeric mutation type is defined in the section [Mutation type numeric code 
  
 ##### parameters
 
-|parameter               |input/output|description|
+|parameter                     |input/output|description|
 |---|---|---|
-|--genomic-regions       |input  |A transformed version of the GFF3 entries, limited to transcripts, exons and CDS regions|
-|--genome                |input  |A twobit reference genome sequence file|
-|--mutation-probabilities|input  |A pattern partition file with the sequence-context-dependent probabilities|
-|--possible-mutations    |output |The possible mutations for each transcript|
+|--genomic-regions             |input  |A transformed version of the GFF3 entries, limited to transcripts, exons and CDS regions|
+|--genome                      |input  |A twobit reference genome sequence file|
+|--point-mutation-probabilities|input  |A pattern partition file with the sequence-context-dependent point mutation probabilities|
+|--indel-mutation-probabilities|input  |A pattern partition file with the sequence-context-dependent indel probabilities|
+|--possible-mutations          |output |The possible mutations for each transcript|
 
 
 #### classify
