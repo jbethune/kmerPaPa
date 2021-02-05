@@ -37,7 +37,7 @@ fn require_initialization<'a, T>(
 
 fn main() -> Result<()> {
     let app = App::new("genovo")
-        .version("0.2.0")
+        .version("0.2.1")
         .author("Jörn Bethune")
         .about("Determine genes enriched with de-novo mutations")
         .after_help("If no --action is given, all actions are executed.\n\
