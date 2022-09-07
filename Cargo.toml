@@ -1,6 +1,6 @@
 [package]
-name = "genovo"
-version = "0.3.0"
+name = "kmer-papa"
+version = "0.3.1"
 authors = ["Jörn Bethune <joern@localhost>"]
 repository = "https://github.com/BesenbacherLab/genovo"
 edition = "2018"
